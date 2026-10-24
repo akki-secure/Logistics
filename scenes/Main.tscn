@@ -1,0 +1,62 @@
+; メインシーン
+; カメラ・ライト・地面・リーチリフトをまとめた起動シーン
+
+[gd_scene load_steps=8 format=3]
+
+; ReachLift.tscn を外部リソースとして参照
+[ext_resource type="PackedScene" path="res://scenes/ReachLift.tscn" id="1"]
+; 操作スクリプト（F=前進 B=後退 L=左旋回 R=右旋回）
+[ext_resource type="Script" path="res://scripts/ReachLiftController.gd" id="2"]
+
+; ===== サブリソース =====
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
+sky_horizon_color = Color(0.65, 0.83, 0.97, 1)
+ground_horizon_color = Color(0.65, 0.83, 0.97, 1)
+
+[sub_resource type="Sky" id="Sky_1"]
+sky_material = SubResource("ProceduralSkyMaterial_1")
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 2
+sky = SubResource("Sky_1")
+ambient_light_source = 3
+ambient_light_energy = 0.5
+
+; 地面メッシュ: 20m × 20m の平面
+[sub_resource type="PlaneMesh" id="PlaneMesh_Ground"]
+size = Vector2(20, 20)
+
+; 地面マテリアル（濃いグレー）
+[sub_resource type="StandardMaterial3D" id="Mat_Ground"]
+albedo_color = Color(0.35, 0.35, 0.35, 1)
+
+; ===== シーンツリー =====
+
+[node name="Main" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_1")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-45, 45, 0)
+light_energy = 1.2
+shadow_enabled = true
+
+[node name="Ground" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0, 0)
+mesh = SubResource("PlaneMesh_Ground")
+surface_material_override/0 = SubResource("Mat_Ground")
+
+; リーチリフト（操作スクリプト付き）
+[node name="ReachLift" type="Node3D" parent="." instance=ExtResource("1")]
+position = Vector3(0, 0, 0)
+script = ExtResource("2")
+
+; カメラ（リーチリフトの子 → リフトと一緒に動く）
+; position=(0, 2.5, 4.5) → リフト後方・高さ2.5m
+; rotation_degrees=(-18, 0, 0) → 少し下向き
+[node name="Camera3D" type="Camera3D" parent="ReachLift"]
+position = Vector3(0, 2.5, 4.5)
+rotation_degrees = Vector3(-18, 0, 0)
+current = true

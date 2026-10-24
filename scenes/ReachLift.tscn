@@ -1,0 +1,323 @@
+; リーチリフト 3Dシーン（NICHIYU PLATTER参考）
+; 座標系: 前方=-Z, 上方=+Y, 原点=車体中心・地面レベル
+
+[gd_scene load_steps=28 format=3]
+
+; ===== マテリアル（7種） =====
+
+[sub_resource type="StandardMaterial3D" id="Mat_White"]
+albedo_color = Color(0.88, 0.90, 0.90, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Black"]
+albedo_color = Color(0.12, 0.12, 0.12, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_DarkGray"]
+albedo_color = Color(0.22, 0.22, 0.22, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_Red"]
+albedo_color = Color(0.85, 0.10, 0.08, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_TireBlack"]
+albedo_color = Color(0.08, 0.08, 0.08, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_WhiteWheel"]
+albedo_color = Color(0.85, 0.85, 0.85, 1)
+
+; LEDライト発光面（エミッシブ・ウォームホワイト）
+[sub_resource type="StandardMaterial3D" id="Mat_LED"]
+albedo_color = Color(1.0, 1.0, 0.95, 1)
+emission_enabled = true
+emission = Color(1.0, 0.98, 0.85, 1)
+emission_energy_multiplier = 3.0
+
+; ===== メッシュ（17種） =====
+
+; 車体ベースフレーム（底面）: 幅1.15m × 高さ0.15m × 奥行0.9m
+[sub_resource type="BoxMesh" id="BoxMesh_BaseLower"]
+size = Vector3(1.15, 0.15, 0.9)
+
+; 車体下部（バッテリー・機械エリア、後方に配置）: 幅1.05m × 高さ0.85m × 奥行0.72m
+[sub_resource type="BoxMesh" id="BoxMesh_BodyLower"]
+size = Vector3(1.05, 0.85, 0.72)
+
+; 車体側面パネル（左右共用）: 幅0.07m × 高さ0.55m × 奥行0.7m
+[sub_resource type="BoxMesh" id="BoxMesh_BodySidePanel"]
+size = Vector3(0.07, 0.55, 0.7)
+
+; 車体後面パネル: 幅1.05m × 高さ0.55m × 奥行0.07m
+[sub_resource type="BoxMesh" id="BoxMesh_BodyRearWall"]
+size = Vector3(1.05, 0.55, 0.07)
+
+; オペレーターエリア背面壁（BodyLowerの前面と同一Z=0.55に配置）
+; これにより後方カメラからはオペレーターエリアが見えなくなる
+[sub_resource type="BoxMesh" id="BoxMesh_BodyFrontUpperWall"]
+size = Vector3(1.05, 0.55, 0.07)
+
+; オペレーター乗車床（スタンディングプラットフォーム）: 幅0.85m × 高さ0.05m × 奥行0.38m
+[sub_resource type="BoxMesh" id="BoxMesh_OperatorFloor"]
+size = Vector3(0.85, 0.05, 0.38)
+
+; オペレーター前面ガードレール（横バー）: 幅0.82m × 高さ0.05m × 奥行0.05m
+[sub_resource type="BoxMesh" id="BoxMesh_RailFront"]
+size = Vector3(0.82, 0.05, 0.05)
+
+; オペレーターガードレール縦ポスト（左右共用）: 幅0.05m × 高さ0.75m × 奥行0.05m
+[sub_resource type="BoxMesh" id="BoxMesh_RailPost"]
+size = Vector3(0.05, 0.75, 0.05)
+
+; コントロールコンソール（操作レバー台）: 幅0.45m × 高さ0.12m × 奥行0.15m
+[sub_resource type="BoxMesh" id="BoxMesh_Console"]
+size = Vector3(0.45, 0.12, 0.15)
+
+; リーチアーム（左右共用）: 幅0.07m × 高さ0.07m × 奥行0.5m
+[sub_resource type="BoxMesh" id="BoxMesh_ReachArm"]
+size = Vector3(0.07, 0.07, 0.5)
+
+; マストレール（左右共用）: 幅0.06m × 高さ2.05m × 奥行0.06m
+[sub_resource type="BoxMesh" id="BoxMesh_Mast"]
+size = Vector3(0.06, 2.05, 0.06)
+
+; フォークキャリッジ（ツメ根元横板）: 幅0.85m × 高さ0.15m × 奥行0.08m
+[sub_resource type="BoxMesh" id="BoxMesh_Carriage"]
+size = Vector3(0.85, 0.15, 0.08)
+
+; ツメ（左右共用）: 幅0.12m × 厚さ0.04m × 長さ1.07m
+[sub_resource type="BoxMesh" id="BoxMesh_Fork"]
+size = Vector3(0.12, 0.04, 1.07)
+
+; ヘッドガード支柱（4本共用）: 幅0.05m × 高さ2.05m × 奥行0.05m
+[sub_resource type="BoxMesh" id="BoxMesh_HGPillar"]
+size = Vector3(0.05, 2.05, 0.05)
+
+; ヘッドガード上面 前後横梁（共用）
+[sub_resource type="BoxMesh" id="BoxMesh_HGTopFB"]
+size = Vector3(1.15, 0.06, 0.06)
+
+; ヘッドガード上面 左右縦梁（共用）
+[sub_resource type="BoxMesh" id="BoxMesh_HGTopLR"]
+size = Vector3(0.06, 0.06, 1.2)
+
+; LEDライトハウジング（黒枠）
+[sub_resource type="BoxMesh" id="BoxMesh_LightHousing"]
+size = Vector3(0.85, 0.1, 0.18)
+
+; LEDライト発光面（薄い板）
+[sub_resource type="BoxMesh" id="BoxMesh_LightFace"]
+size = Vector3(0.78, 0.07, 0.02)
+
+; 後輪（左右2輪）: 半径0.22m × 幅0.16m
+[sub_resource type="CylinderMesh" id="CylinderMesh_RearWheel"]
+top_radius = 0.22
+bottom_radius = 0.22
+height = 0.16
+
+; 前輪（左右共用、スタビライザーホイール）: 半径0.16m × 幅0.13m
+[sub_resource type="CylinderMesh" id="CylinderMesh_FrontWheel"]
+top_radius = 0.16
+bottom_radius = 0.16
+height = 0.13
+
+; ===== シーンツリー =====
+
+[node name="ReachLift" type="Node3D"]
+
+; ===== 車体（Body） =====
+
+; ベースフレーム（地面接地部分）
+[node name="BaseLower" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.075, 0.5)
+mesh = SubResource("BoxMesh_BaseLower")
+surface_material_override/0 = SubResource("Mat_White")
+
+; 車体下部（バッテリー・機械エリア）: 後方Z=0.55〜1.27, Y=0.15〜1.0
+; オペレーター乗車スペースは前方Z=-0.5〜0.55 に確保
+[node name="BodyLower" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.575, 0.91)
+mesh = SubResource("BoxMesh_BodyLower")
+surface_material_override/0 = SubResource("Mat_White")
+
+; 左側面パネル（車体下部の上に続く壁、Y=1.0〜1.55）
+[node name="BodySideLeft" type="MeshInstance3D" parent="."]
+position = Vector3(-0.52, 1.275, 0.87)
+mesh = SubResource("BoxMesh_BodySidePanel")
+surface_material_override/0 = SubResource("Mat_White")
+
+; 右側面パネル
+[node name="BodySideRight" type="MeshInstance3D" parent="."]
+position = Vector3(0.52, 1.275, 0.87)
+mesh = SubResource("BoxMesh_BodySidePanel")
+surface_material_override/0 = SubResource("Mat_White")
+
+; 後面パネル（Y=1.0〜1.55、車体の奥）
+[node name="BodyRearWall" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.275, 1.27)
+mesh = SubResource("BoxMesh_BodyRearWall")
+surface_material_override/0 = SubResource("Mat_White")
+
+; オペレーターエリア背面壁（Z=0.55、BodyLower前面と揃える）
+; 後方から見たとき：この壁でオペレーターエリアが見えなくなる → 閉じた車体に見える
+; 前方から見たとき：この壁の手前にオペレーターエリア（床・レール・コンソール）が見える
+[node name="BodyFrontUpperWall" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.275, 0.55)
+mesh = SubResource("BoxMesh_BodyFrontUpperWall")
+surface_material_override/0 = SubResource("Mat_White")
+
+; ===== オペレーター乗車エリア =====
+
+; 乗車床（オペレーターが立つ濃いグレーのプラットフォーム）
+; ベース上のZ=−0.03〜0.35の範囲
+[node name="OperatorFloor" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.175, 0.16)
+mesh = SubResource("BoxMesh_OperatorFloor")
+surface_material_override/0 = SubResource("Mat_DarkGray")
+
+; 前面ガードレール横バー（胸の高さ Y=0.9）
+; オペレーターが前に倒れないよう保護
+[node name="RailFront" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.9, 0.0)
+mesh = SubResource("BoxMesh_RailFront")
+surface_material_override/0 = SubResource("Mat_Black")
+
+; ガードレール縦ポスト 左（床から横バーをつなぐ）
+[node name="RailPostLeft" type="MeshInstance3D" parent="."]
+position = Vector3(-0.4, 0.575, 0.0)
+mesh = SubResource("BoxMesh_RailPost")
+surface_material_override/0 = SubResource("Mat_Black")
+
+; ガードレール縦ポスト 右
+[node name="RailPostRight" type="MeshInstance3D" parent="."]
+position = Vector3(0.4, 0.575, 0.0)
+mesh = SubResource("BoxMesh_RailPost")
+surface_material_override/0 = SubResource("Mat_Black")
+
+; コントロールコンソール（操作レバー台 - オペレーター正面）
+[node name="Console" type="MeshInstance3D" parent="."]
+position = Vector3(0, 1.0, -0.05)
+mesh = SubResource("BoxMesh_Console")
+surface_material_override/0 = SubResource("Mat_DarkGray")
+
+; ===== リーチアーム =====
+
+[node name="ReachArmLeft" type="MeshInstance3D" parent="."]
+position = Vector3(-0.39, 0.15, -0.25)
+mesh = SubResource("BoxMesh_ReachArm")
+surface_material_override/0 = SubResource("Mat_DarkGray")
+
+[node name="ReachArmRight" type="MeshInstance3D" parent="."]
+position = Vector3(0.39, 0.15, -0.25)
+mesh = SubResource("BoxMesh_ReachArm")
+surface_material_override/0 = SubResource("Mat_DarkGray")
+
+; ===== マスト（黒） =====
+
+[node name="MastLeft" type="MeshInstance3D" parent="."]
+position = Vector3(-0.25, 1.025, -0.5)
+mesh = SubResource("BoxMesh_Mast")
+surface_material_override/0 = SubResource("Mat_Black")
+
+[node name="MastRight" type="MeshInstance3D" parent="."]
+position = Vector3(0.25, 1.025, -0.5)
+mesh = SubResource("BoxMesh_Mast")
+surface_material_override/0 = SubResource("Mat_Black")
+
+[node name="ForkCarriage" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.15, -0.5)
+mesh = SubResource("BoxMesh_Carriage")
+surface_material_override/0 = SubResource("Mat_DarkGray")
+
+; ===== ツメ（赤） =====
+
+[node name="ForkLeft" type="MeshInstance3D" parent="."]
+position = Vector3(-0.39, 0.02, -1.035)
+mesh = SubResource("BoxMesh_Fork")
+surface_material_override/0 = SubResource("Mat_Red")
+
+[node name="ForkRight" type="MeshInstance3D" parent="."]
+position = Vector3(0.39, 0.02, -1.035)
+mesh = SubResource("BoxMesh_Fork")
+surface_material_override/0 = SubResource("Mat_Red")
+
+; ===== ヘッドガード（黒） =====
+
+[node name="HG_PillarFL" type="MeshInstance3D" parent="."]
+position = Vector3(-0.55, 1.025, -0.3)
+mesh = SubResource("BoxMesh_HGPillar")
+surface_material_override/0 = SubResource("Mat_Black")
+
+[node name="HG_PillarFR" type="MeshInstance3D" parent="."]
+position = Vector3(0.55, 1.025, -0.3)
+mesh = SubResource("BoxMesh_HGPillar")
+surface_material_override/0 = SubResource("Mat_Black")
+
+[node name="HG_PillarRL" type="MeshInstance3D" parent="."]
+position = Vector3(-0.55, 1.025, 0.85)
+mesh = SubResource("BoxMesh_HGPillar")
+surface_material_override/0 = SubResource("Mat_Black")
+
+[node name="HG_PillarRR" type="MeshInstance3D" parent="."]
+position = Vector3(0.55, 1.025, 0.85)
+mesh = SubResource("BoxMesh_HGPillar")
+surface_material_override/0 = SubResource("Mat_Black")
+
+[node name="HG_TopFront" type="MeshInstance3D" parent="."]
+position = Vector3(0, 2.072, -0.3)
+mesh = SubResource("BoxMesh_HGTopFB")
+surface_material_override/0 = SubResource("Mat_Black")
+
+[node name="HG_TopRear" type="MeshInstance3D" parent="."]
+position = Vector3(0, 2.072, 0.85)
+mesh = SubResource("BoxMesh_HGTopFB")
+surface_material_override/0 = SubResource("Mat_Black")
+
+[node name="HG_TopLeft" type="MeshInstance3D" parent="."]
+position = Vector3(-0.55, 2.072, 0.275)
+mesh = SubResource("BoxMesh_HGTopLR")
+surface_material_override/0 = SubResource("Mat_Black")
+
+[node name="HG_TopRight" type="MeshInstance3D" parent="."]
+position = Vector3(0.55, 2.072, 0.275)
+mesh = SubResource("BoxMesh_HGTopLR")
+surface_material_override/0 = SubResource("Mat_Black")
+
+; ===== LEDライトパネル =====
+
+[node name="LightHousing" type="MeshInstance3D" parent="."]
+position = Vector3(0, 2.0, -0.38)
+mesh = SubResource("BoxMesh_LightHousing")
+surface_material_override/0 = SubResource("Mat_Black")
+
+[node name="LightFace" type="MeshInstance3D" parent="."]
+position = Vector3(0, 2.0, -0.48)
+mesh = SubResource("BoxMesh_LightFace")
+surface_material_override/0 = SubResource("Mat_LED")
+
+; ===== タイヤ（計4輪） =====
+; CylinderMesh はY軸向き → rotation_degrees Z=90 で横向き（X軸回転）にする
+
+; 後輪 左（黒タイヤ）: Z=0.85（車体後方）
+[node name="RearWheelLeft" type="MeshInstance3D" parent="."]
+position = Vector3(-0.42, 0.22, 0.85)
+rotation_degrees = Vector3(0, 0, 90)
+mesh = SubResource("CylinderMesh_RearWheel")
+surface_material_override/0 = SubResource("Mat_TireBlack")
+
+; 後輪 右（黒タイヤ）
+[node name="RearWheelRight" type="MeshInstance3D" parent="."]
+position = Vector3(0.42, 0.22, 0.85)
+rotation_degrees = Vector3(0, 0, 90)
+mesh = SubResource("CylinderMesh_RearWheel")
+surface_material_override/0 = SubResource("Mat_TireBlack")
+
+; 前輪 左（白、リーチアーム先端のスタビライザー）: Z=-0.5（マスト下）
+[node name="FrontWheelLeft" type="MeshInstance3D" parent="."]
+position = Vector3(-0.39, 0.16, 0.05)
+rotation_degrees = Vector3(0, 0, 90)
+mesh = SubResource("CylinderMesh_FrontWheel")
+surface_material_override/0 = SubResource("Mat_TireBlack")
+
+; 前輪 右（黒）
+[node name="FrontWheelRight" type="MeshInstance3D" parent="."]
+position = Vector3(0.39, 0.16, 0.05)
+rotation_degrees = Vector3(0, 0, 90)
+mesh = SubResource("CylinderMesh_FrontWheel")
+surface_material_override/0 = SubResource("Mat_TireBlack")
