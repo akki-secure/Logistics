@@ -1,0 +1,11 @@
+; パレットシーン
+; ルートノード（Node3D）に Pallet.gd をアタッチしたシーン。
+; Main.tscn にインスタンスとして配置し、
+; Inspector で pallet_type / pallet_size を切り替えて使う。
+
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/Pallet.gd" id="1"]
+
+[node name="Pallet" type="Node3D"]
+script = ExtResource("1")
