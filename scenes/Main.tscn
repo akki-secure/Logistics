@@ -3,6 +3,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ReachLift.tscn" id="1"]
 [ext_resource type="Script" uid="uid://c1ytpk3t23ioi" path="res://scripts/ReachLiftController.gd" id="2"]
 [ext_resource type="PackedScene" path="res://scenes/Pallet.tscn" id="3"]
+[ext_resource type="PackedScene" path="res://scenes/StretchFilm.tscn" id="4"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
 sky_horizon_color = Color(0.65, 0.83, 0.97, 1)
@@ -59,3 +60,12 @@ pallet_type = 1
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4)
 pallet_type = 1
 pallet_size = 1
+
+[node name="StretchFilm1" parent="." instance=ExtResource("4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.0, 0.25, -2.5)
+
+[node name="StretchFilm2" parent="." instance=ExtResource("4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.4, 0.25, -2.5)
+
+[node name="StretchFilm3" parent="." instance=ExtResource("4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8, 0.25, -2.5)
