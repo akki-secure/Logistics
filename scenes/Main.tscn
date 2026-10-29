@@ -41,7 +41,7 @@ surface_material_override/0 = SubResource("Mat_Ground")
 [node name="ReachLift" parent="." unique_id=1554994171 instance=ExtResource("1")]
 script = ExtResource("2")
 
-[node name="Camera3D" type="Camera3D" parent="ReachLift" unique_id=88936242]
+[node name="Camera3D2" type="Camera3D" parent="ReachLift" unique_id=88936242]
 transform = Transform3D(1, 0, 0, 0, 0.95105654, 0.309017, 0, -0.309017, 0.95105654, 0, 2.5, 4.5)
 current = true
 
@@ -61,11 +61,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -4)
 pallet_type = 1
 pallet_size = 1
 
-[node name="StretchFilm1" parent="." instance=ExtResource("4")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.0, 0.25, -2.5)
+[node name="StretchFilm1" parent="." unique_id=1925181722 instance=ExtResource("4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.25, -2.5)
 
-[node name="StretchFilm2" parent="." instance=ExtResource("4")]
+[node name="StretchFilm2" parent="." unique_id=1515035549 instance=ExtResource("4")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.4, 0.25, -2.5)
 
-[node name="StretchFilm3" parent="." instance=ExtResource("4")]
+[node name="StretchFilm3" parent="." unique_id=1786017067 instance=ExtResource("4")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.8, 0.25, -2.5)
