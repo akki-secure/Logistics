@@ -12,13 +12,19 @@ const FORK_MAX_Y  = 1.8
 const TILT_MIN    = -10.0
 const TILT_MAX    =  10.0
 
-# カメラ設定
+# 三人称カメラ設定
 const CAM_DIST        = 4.5
 const CAM_SENSITIVITY = 0.25
 const CAM_PITCH_MIN   = 5.0
 const CAM_PITCH_MAX   = 70.0
 
+# 一人称カメラ設定
+const FPS_SENSITIVITY = 0.20
+const FPS_YAW_LIMIT   = 120.0
+const FPS_PITCH_LIMIT =  45.0
+
 @onready var camera        = $Camera3D
+@onready var fps_camera    = $FPSCamera
 @onready var fork_carriage = $ForkCarriage
 @onready var fork_left     = $ForkLeft
 @onready var fork_right    = $ForkRight
@@ -30,17 +36,21 @@ var cam_yaw:     float = 0.0
 var cam_pitch:   float = 25.0
 var light_on:    bool  = true
 
+var is_fps:    bool  = false
+var fps_yaw:   float = 0.0
+var fps_pitch: float = 0.0
+
 func _ready() -> void:
-	# マテリアルを複製して独立して変更できるようにする
 	var mat = light_face.get_surface_override_material(0)
 	if mat:
 		light_face.set_surface_override_material(0, mat.duplicate())
+	fps_camera.current = false
 	_update_camera()
 
 func _input(event: InputEvent) -> void:
-	# 右クリック：カメラ回転モード
+	# 右クリック：三人称モード時のみカメラ回転
 	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_RIGHT:
+		if event.button_index == MOUSE_BUTTON_RIGHT and not is_fps:
 			if event.pressed:
 				Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 			else:
@@ -48,13 +58,32 @@ func _input(event: InputEvent) -> void:
 
 	if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
 		if event is InputEventMouseMotion:
-			cam_yaw   = fmod(cam_yaw - event.relative.x * CAM_SENSITIVITY, 360.0)
-			cam_pitch = clamp(cam_pitch + event.relative.y * CAM_SENSITIVITY,
-							  CAM_PITCH_MIN, CAM_PITCH_MAX)
-			_update_camera()
+			if is_fps:
+				fps_yaw  -= event.relative.x * FPS_SENSITIVITY
+				fps_yaw   = clamp(fps_yaw, -FPS_YAW_LIMIT, FPS_YAW_LIMIT)
+				fps_pitch += event.relative.y * FPS_SENSITIVITY
+				fps_pitch  = clamp(fps_pitch, -FPS_PITCH_LIMIT, FPS_PITCH_LIMIT)
+				_update_fps_camera()
+			else:
+				cam_yaw   = fmod(cam_yaw - event.relative.x * CAM_SENSITIVITY, 360.0)
+				cam_pitch = clamp(cam_pitch + event.relative.y * CAM_SENSITIVITY,
+								  CAM_PITCH_MIN, CAM_PITCH_MAX)
+				_update_camera()
 
-	# E キー：ライトON/OFF切り替え
 	if event is InputEventKey and event.pressed and not event.echo:
+		# V キー：一人称↔三人称切替
+		if event.keycode == KEY_V:
+			is_fps = !is_fps
+			camera.current     = !is_fps
+			fps_camera.current =  is_fps
+			fps_yaw   = 0.0
+			fps_pitch = 0.0
+			_update_fps_camera()
+			if is_fps:
+				Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+			else:
+				Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+		# E キー：ライトON/OFF
 		if event.keycode == KEY_E:
 			light_on = !light_on
 			_apply_light()
@@ -111,3 +140,6 @@ func _update_camera() -> void:
 		CAM_DIST * cos(yr) * cos(pr)
 	)
 	camera.look_at(global_position + Vector3(0, 1.0, 0), Vector3.UP)
+
+func _update_fps_camera() -> void:
+	fps_camera.rotation_degrees = Vector3(fps_pitch, -90.0 + fps_yaw, 0.0)

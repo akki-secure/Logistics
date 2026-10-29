@@ -321,3 +321,15 @@ position = Vector3(0.39, 0.16, 0.05)
 rotation_degrees = Vector3(0, 0, 90)
 mesh = SubResource("CylinderMesh_FrontWheel")
 surface_material_override/0 = SubResource("Mat_TireBlack")
+
+; ===== カメラ =====
+
+; 三人称カメラ（軌道式・右クリックドラッグで回転）
+[node name="Camera3D" type="Camera3D" parent="."]
+current = true
+
+; 一人称カメラ（立ち乗り運転席・床から1.6m・フォーク方向の右90°横向き）
+[node name="FPSCamera" type="Camera3D" parent="."]
+position = Vector3(0, 1.6, 0.16)
+rotation_degrees = Vector3(0, -90, 0)
+current = false
