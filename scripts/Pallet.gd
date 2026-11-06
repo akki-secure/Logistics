@@ -28,7 +28,12 @@ enum PalletSize {
 # ノードが画面に登場した瞬間に1回だけ自動で呼ばれる特別な関数。
 
 func _ready() -> void:
+	add_to_group("pallets")  # リフトがパレットを探せるようにグループへ登録
 	_build_pallet()
+
+# パレットの一辺の長さ（メートル）。積み込みの重なり判定などで使う。
+func get_footprint() -> float:
+	return 1.10 if pallet_size == PalletSize.LARGE else 0.80
 
 # ── パレット生成のメイン関数 ─────────────────────────────────────────────────
 func _build_pallet() -> void:

@@ -1,0 +1,11 @@
+; トラックシーン
+; ルートノード（Node3D）に Truck.gd をアタッチしたシーン。
+; Main.tscn にインスタンスとして配置する。
+; 車体はスクリプトが BoxMesh / CylinderMesh で生成する。
+
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/Truck.gd" id="1"]
+
+[node name="Truck" type="Node3D"]
+script = ExtResource("1")

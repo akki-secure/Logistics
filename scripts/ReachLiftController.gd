@@ -30,6 +30,20 @@ const FPS_PITCH_LIMIT =  45.0
 @onready var fork_right    = $ForkRight
 @onready var light_face    = $LightFace
 
+# パレット積み込み設定
+const FORK_CENTER_Z    = -1.035  # フォークの中心（リフトのローカル座標 Z）
+const FORK_TOP_OFFSET  = 0.02    # フォークの板の上面（fork_height からの高さ）
+const PICK_RANGE_XZ    = 0.6     # フォーク中心からこの距離以内のパレットを掴める
+const PICK_MAX_YAW_DEG = 15.0    # パレットの向きがフォークと何度までずれていてよいか
+const PICK_MIN_DY      = -0.03   # フォーク上面 - パレット底面 の許容範囲（下限）
+const PICK_MAX_DY      = 0.09    # 同（上限。パレットの桁の高さまで）
+const GROUND_PLACE_MAX = 0.3     # 地面に置くときのフォーク上面の最大高さ
+const MESSAGE_SECONDS  = 2.5
+
+var held_pallet: Node3D = null
+var _message_label: Label
+var _message_timer: float = 0.0
+
 var fork_height: float = 0.02
 var fork_tilt:   float = 0.0
 var cam_yaw:     float = 0.0
@@ -46,6 +60,7 @@ func _ready() -> void:
 		light_face.set_surface_override_material(0, mat.duplicate())
 	fps_camera.current = false
 	_update_camera()
+	_create_message_label()
 
 func _input(event: InputEvent) -> void:
 	# 右クリック：三人称モード時のみカメラ回転
@@ -87,6 +102,12 @@ func _input(event: InputEvent) -> void:
 		if event.keycode == KEY_E:
 			light_on = !light_on
 			_apply_light()
+		# P キー：パレットを掴む／置く
+		if event.keycode == KEY_P:
+			if held_pallet == null:
+				_try_pick_pallet()
+			else:
+				_try_place_pallet()
 
 func _process(delta: float) -> void:
 	# ===== 走行操作 =====
@@ -116,6 +137,126 @@ func _process(delta: float) -> void:
 	if Input.is_key_pressed(KEY_LEFT):
 		fork_tilt = maxf(fork_tilt - TILT_SPEED * delta, TILT_MIN)
 		_apply_fork_tilt()
+
+	# ===== 掴んでいるパレットをフォークに追従させる =====
+	_follow_held_pallet()
+
+	# ===== メッセージ表示の時間切れ =====
+	if _message_timer > 0.0:
+		_message_timer -= delta
+		if _message_timer <= 0.0:
+			_message_label.text = ""
+
+# ── パレット積み込み ────────────────────────────────────────────────────────
+
+# フォーク上面の位置（ワールド座標）
+func _fork_top_position() -> Vector3:
+	return to_global(Vector3(0.0, fork_height + FORK_TOP_OFFSET, FORK_CENTER_Z))
+
+# フォークの上にあるパレットを1つ探して掴む
+func _try_pick_pallet() -> void:
+	var fork_top := _fork_top_position()
+	var best: Node3D = null
+	var best_dist := INF
+	for p in get_tree().get_nodes_in_group("pallets"):
+		var pallet := p as Node3D
+		if pallet == null:
+			continue
+		# フォーク基準（リフトのローカル座標）でのパレット位置
+		var lp := to_local(pallet.global_position)
+		if absf(lp.x) > PICK_RANGE_XZ or absf(lp.z - FORK_CENTER_Z) > PICK_RANGE_XZ:
+			continue
+		var dy := fork_top.y - pallet.global_position.y
+		if dy < PICK_MIN_DY or dy > PICK_MAX_DY:
+			continue
+		# 向きのずれ（パレットは180°回しても同じ形なので、PI 周期で見る）
+		var diff := fposmod(pallet.global_rotation.y - global_rotation.y + PI * 0.5, PI) - PI * 0.5
+		if absf(diff) > deg_to_rad(PICK_MAX_YAW_DEG):
+			continue
+		var dist := Vector2(lp.x, lp.z - FORK_CENTER_Z).length()
+		if dist < best_dist:
+			best_dist = dist
+			best = pallet
+	if best == null:
+		_show_message("パレットがフォークの上にありません")
+		return
+	held_pallet = best
+	_follow_held_pallet()
+	_show_message("パレットを掴みました (P で置く)")
+
+# 掴んでいるパレットを置く
+func _try_place_pallet() -> void:
+	var pallet := held_pallet
+	var pos := pallet.global_position
+	var footprint := _pallet_footprint(pallet)
+
+	# 置く先の高さを決める：荷台の上なら荷台の床、外なら地面
+	var target_y := 0.0
+	var truck := _find_truck_under(pallet, footprint)
+	if truck != null:
+		var bed_y: float = truck.get_bed_top_y()
+		if pos.y < bed_y - 0.02:
+			_show_message("荷台の床より下には置けません（フォークを上げてください）")
+			return
+		target_y = bed_y
+	else:
+		if pos.y > GROUND_PLACE_MAX:
+			_show_message("高すぎます。フォークを下げてください")
+			return
+
+	# 他のパレットと重なっていないか確認する
+	for p in get_tree().get_nodes_in_group("pallets"):
+		var other := p as Node3D
+		if other == null or other == pallet:
+			continue
+		if absf(other.global_position.y - target_y) > 0.3:
+			continue  # 高さが違う（荷台の上と地面など）ものは重ならない
+		var d := Vector2(pos.x - other.global_position.x, pos.z - other.global_position.z).length()
+		if d < (footprint + _pallet_footprint(other)) * 0.5 - 0.01:
+			_show_message("他のパレットと重なっています")
+			return
+
+	pallet.global_position = Vector3(pos.x, target_y, pos.z)
+	held_pallet = null
+	_show_message("荷台に置きました" if truck != null else "地面に置きました")
+
+# パレットの4隅がすべてトラックの荷台の上にあれば、そのトラックを返す
+func _find_truck_under(pallet: Node3D, footprint: float) -> Node:
+	var half := footprint * 0.5
+	for t in get_tree().get_nodes_in_group("truck"):
+		var all_over := true
+		for corner in [Vector3(-half, 0, -half), Vector3(half, 0, -half),
+				Vector3(-half, 0, half), Vector3(half, 0, half)]:
+			if not t.is_over_bed(pallet.to_global(corner)):
+				all_over = false
+				break
+		if all_over:
+			return t
+	return null
+
+# パレットの一辺の長さ（大 1.1m / 小 0.8m）
+func _pallet_footprint(pallet: Node3D) -> float:
+	return pallet.get_footprint()
+
+func _follow_held_pallet() -> void:
+	if held_pallet == null:
+		return
+	held_pallet.global_position = _fork_top_position()
+	held_pallet.global_rotation = Vector3(0.0, global_rotation.y, 0.0)
+
+# ── 画面メッセージ ──────────────────────────────────────────────────────────
+func _create_message_label() -> void:
+	var layer := CanvasLayer.new()
+	_message_label = Label.new()
+	_message_label.position = Vector2(20, 20)
+	_message_label.add_theme_font_size_override("font_size", 22)
+	_message_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	layer.add_child(_message_label)
+	add_child(layer)
+
+func _show_message(text: String) -> void:
+	_message_label.text = text
+	_message_timer = MESSAGE_SECONDS
 
 func _apply_fork_height() -> void:
 	fork_carriage.position.y = fork_height + 0.13
